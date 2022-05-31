@@ -15,14 +15,11 @@ class MainViewModel: ViewModel() {
     private val sumFlow = MutableSharedFlow<Int>(replay = 1000, extraBufferCapacity = 100, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private var nFlow = mutableListOf<Flow<Int>>()
 
-    var lastValue = 0
-
-
     init {
         viewModelScope.launch {
             sumFlow.collectLatest{
-                lastValue += it
-                _printFlow.emit(lastValue)
+                val lastValue = _printFlow.value ?: 0
+                _printFlow.emit(lastValue + it)
             }
         }
 
@@ -30,7 +27,6 @@ class MainViewModel: ViewModel() {
 
     fun onFlowButtonClicked(value: Int) = viewModelScope.launch {
         _printFlow.tryEmit(null)
-        lastValue = 0
         nFlow.clear()
 
         for(index in 0 until value){
