@@ -30,15 +30,16 @@ class MainViewModel: ViewModel() {
         nFlow.clear()
 
         for(index in 0 until value){
-            val flow = flowOf(index)
-            nFlow.add(flow)
+            nFlow.add(flow{
+                val delayInMillis = (index + 1) * 100
+                delay(delayInMillis.toLong())
+
+                emit(index)
+            })
         }
 
         nFlow.forEach {
             it.collect { index ->
-                val delayInMillis = (index + 1) * 100
-                delay(delayInMillis.toLong())
-
                 val result = index + 1
                 sumFlow.tryEmit(result)
             }
