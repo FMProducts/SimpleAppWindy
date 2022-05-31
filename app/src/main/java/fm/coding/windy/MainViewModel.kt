@@ -46,9 +46,6 @@ class MainViewModel : ViewModel() {
                     sumFlow.tryEmit(index)
                 }
             }
-            viewModelScope.launch {
-                it.collect()
-            }
         }
     }
 
