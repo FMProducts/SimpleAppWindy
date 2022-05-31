@@ -1,6 +1,7 @@
 package fm.coding.windy
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -13,6 +14,8 @@ class MainActivity : AppCompatActivity() {
 
     private var binding: ActivityMainBinding by notNull()
     private var viewModel: MainViewModel by notNull()
+
+    private var start: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupListener() = with(binding){
         runFlowButton.setOnClickListener {
+            start = System.currentTimeMillis()
             val value = valueInput.text.toString().toIntOrNull() ?: 0 // default value 0
             viewModel.onFlowButtonClicked(value)
         }
@@ -37,8 +41,10 @@ class MainActivity : AppCompatActivity() {
         printFlow.onEach {
             if (it == null) binding.resultTextView.text = "" // if receive null clear text view
             else {
+                val time = System.currentTimeMillis() - start
                 binding.resultTextView.append("\n") // new line
                 binding.resultTextView.append(it.toString())
+                binding.resultTextView.append("- $time")
             }
         }.launchIn(lifecycleScope)
     }
