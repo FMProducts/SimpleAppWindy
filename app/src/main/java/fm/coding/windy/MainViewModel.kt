@@ -2,40 +2,47 @@ package fm.coding.windy
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlin.properties.Delegates.notNull
 
 class MainViewModel: ViewModel() {
 
     private val _printFlow = MutableStateFlow<Int?>(null)
     val printFlow = _printFlow.asStateFlow()
 
-    private val nFlow = MutableSharedFlow<Int>(replay = 1000)
+    private val sumFlow = MutableSharedFlow<Int>(replay = 1000, extraBufferCapacity = 100, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private var nFlow = MutableSharedFlow<Int>(replay=1000, extraBufferCapacity = 100, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    var tempValue = 0
-
+    var lastValue = 0
     init {
         viewModelScope.launch {
-            nFlow.collect{
-                tempValue += it
-                _printFlow.tryEmit(tempValue)
+            sumFlow.collectLatest{
+                lastValue += it
+                _printFlow.emit(lastValue)
             }
         }
-    }
 
-    fun onFlowButtonClicked(value: Int) = viewModelScope.launch{
-        _printFlow.tryEmit(null)
-        tempValue = 0
-        for(index in 0 until value){
-            val delayInMillis = (index + 1) * 100
-            delay(delayInMillis.toLong())
-            nFlow.tryEmit(index + 1)
+        viewModelScope.launch {
+            nFlow.collect {
+                val delayInMillis = it * 100
+                delay(delayInMillis.toLong())
+                sumFlow.emit(it)
+            }
         }
 
+    }
 
+    fun onFlowButtonClicked(value: Int) = viewModelScope.launch {
+        _printFlow.tryEmit(null)
+        lastValue = 0
+        for(index in 0 until value){
+            nFlow.emit(index + 1)
+        }
     }
 
 }
