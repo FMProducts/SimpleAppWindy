@@ -2,13 +2,10 @@ package fm.coding.windy
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlin.properties.Delegates.notNull
 
 class MainViewModel: ViewModel() {
 
@@ -16,9 +13,11 @@ class MainViewModel: ViewModel() {
     val printFlow = _printFlow.asStateFlow()
 
     private val sumFlow = MutableSharedFlow<Int>(replay = 1000, extraBufferCapacity = 100, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private var nFlow = MutableSharedFlow<Int>(replay=1000, extraBufferCapacity = 100, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private var nFlow = mutableListOf<Flow<Int>>()
 
     var lastValue = 0
+
+
     init {
         viewModelScope.launch {
             sumFlow.collectLatest{
@@ -27,21 +26,26 @@ class MainViewModel: ViewModel() {
             }
         }
 
-        viewModelScope.launch {
-            nFlow.collect {
-                val delayInMillis = it * 100
-                delay(delayInMillis.toLong())
-                sumFlow.emit(it)
-            }
-        }
-
     }
 
     fun onFlowButtonClicked(value: Int) = viewModelScope.launch {
         _printFlow.tryEmit(null)
         lastValue = 0
+        nFlow.clear()
+
         for(index in 0 until value){
-            nFlow.emit(index + 1)
+            val flow = flowOf(index)
+            nFlow.add(flow)
+        }
+
+        nFlow.forEach {
+            it.collect { index ->
+                val delayInMillis = (index + 1) * 100
+                delay(delayInMillis.toLong())
+
+                val result = index + 1
+                sumFlow.tryEmit(result)
+            }
         }
     }
 
