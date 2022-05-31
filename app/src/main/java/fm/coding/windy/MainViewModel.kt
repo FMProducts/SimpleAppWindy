@@ -33,7 +33,7 @@ class MainViewModel : ViewModel() {
 
         for (index in 0 until value) {
             val flow = flow {
-                val delayInMillis = (index + 1) * 1000
+                val delayInMillis = (index + 1) * 100
                 delay(delayInMillis.toLong())
                 emit(index + 1)
             }.shareIn(viewModelScope, SharingStarted.Lazily)
