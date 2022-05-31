@@ -1,5 +1,6 @@
 package fm.coding.windy
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -31,9 +32,12 @@ class MainViewModel: ViewModel() {
 
         for(index in 0 until value){
             nFlow.add(flow{
+                val startTime = System.currentTimeMillis()
                 val delayInMillis = (index + 1) * 100
                 delay(delayInMillis.toLong())
 
+                val time = System.currentTimeMillis() - startTime
+                Log.v(javaClass.name, "time: $time")
                 emit(index)
             })
         }
